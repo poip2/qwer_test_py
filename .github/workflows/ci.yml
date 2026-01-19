@@ -1,0 +1,50 @@
+name: CI
+
+# 触发机制：什么时候运行？
+on:
+  # 1. 当主分支有代码推送时（通常是合并 PR 后）
+  push:
+    branches: [ "main" ]
+  # 2. 当有针对主分支的 Pull Request 时
+  pull_request:
+    branches: [ "main" ]
+
+# 任务定义
+jobs:
+  check-code:
+    runs-on: ubuntu-22.04
+
+    steps:
+      # 第一步：把代码从仓库里拉下来
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # 第二步：安装 uv (Astral 官方出的 Action，速度极快)
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          # 开启缓存，大大加快后续安装速度
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      # 第三步：安装 Python (uv 会自动帮你管理 Python 版本)
+      - name: Set up Python
+        run: uv python install
+
+      # 第四步：安装依赖 (根据 pyproject.toml 和 uv.lock)
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      # 第五步：代码格式检查 (Linting)
+      # 推荐用 ruff，如果你还没用，可以换成 flake8
+      - name: Lint with Ruff
+        run: uv run ruff check .
+
+      # 第六步：代码格式化检查 (Formatting)
+      # 确保你没有提交乱七八糟的缩进
+      - name: Check formatting with Ruff
+        run: uv run ruff format --check .
+
+      # 第七步：运行测试
+      - name: Run tests
+        run: uv run pytest
