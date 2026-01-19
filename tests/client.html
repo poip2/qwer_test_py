@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test</title>
+</head>
+
+<body>
+    <h2>WebSocket 测试台</h2>
+    <input type="text" id="messageInput" placeholder="输入要发送的消息..." autocomplete="off" />
+    <button onclick="sendMessage()">发送</button>
+    <hr>
+    <div id="messages"></div>
+
+    <script>
+        // 1. 拨通电话：连接到本地服务器的 /ws 接口
+        var ws = new WebSocket("ws://127.0.0.1:8000/ws");
+
+        // 2. 监听：当收到服务器消息时触发
+        ws.onmessage = function (event) {
+            var messages = document.getElementById('messages');
+            var message = document.createElement('div');
+            message.innerText = "收到服务器回复: " + event.data;
+            messages.appendChild(message);
+        };
+
+        // 3. 发送：点击按钮时发送消息
+        function sendMessage() {
+            var input = document.getElementById("messageInput");
+            ws.send(input.value); // 发送数据
+            input.value = '';     // 清空输入框
+        }
+    </script>
+</body>
+
+</html>
