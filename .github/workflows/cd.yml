@@ -1,0 +1,59 @@
+name: CD (Build & Push Docker)
+
+# 触发条件
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ] # 进阶：以后你可以改成只有打标签（如 v1.0）时才发布
+
+# 权限配置 (非常重要！)
+# 允许这个 Workflow 读取代码(contents) 和 上传镜像包(packages)
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-22.04
+
+    steps:
+      # 1. 拉取代码
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. 登录到 GitHub Container Registry
+      # 使用 GitHub 自带的临时 Token 登录，超级安全方便
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 3. 提取元数据（自动生成镜像标签）
+      # 它会把镜像命名为 ghcr.io/你的用户名/仓库名:main
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=sha,format=long
+            latest
+
+      # 4. 设置 Docker Buildx (构建工具)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 5. 构建并推送
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # 使用缓存加快构建速度
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
