@@ -8,7 +8,9 @@ WORKDIR /app
 
 # 3. 环境变量设置
 # ENV UV_COMPILE_BYTECODE=1  # 可选：编译字节码，启动更快
-ENV UV_SYSTEM_PYTHON=1     # 关键：告诉 uv 直接安装到系统 Python，不要创建 venv (在容器里没必要用 venv)
+
+# 关键：告诉 uv 直接安装到系统 Python，不要创建 venv (在容器里没必要用 venv)
+ENV UV_SYSTEM_PYTHON=1
 
 # 4. 先只拷贝依赖文件（利用 Docker 缓存层）
 # 只要这两个文件没变，下次构建就不会重新下载依赖，速度飞快
